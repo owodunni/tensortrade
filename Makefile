@@ -1,5 +1,6 @@
 GPU_IMAGE?="tensortrade:latest-gpu"
 CPU_IMAGE?="tensortrade:latest"
+CURRENT_DIR = $(shell pwd)
 
 clean:
 	find . | grep -E '(__pycache__|\.pyc|\.pyo$$)' | xargs rm -rf
@@ -38,7 +39,7 @@ build-gpu-if-not-built:
 	if [ ! $$(docker images -q ${GPU_IMAGE}) ]; then $(MAKE) build-gpu; fi;
 
 run-notebook: build-cpu-if-not-built
-	docker run -it --rm -p=8888:8888 ${CPU_IMAGE} jupyter notebook --ip='*' --port=8888 --no-browser --allow-root ./examples/
+	docker run -it --rm -p=8888:8888 -v ${CURRENT_DIR}/examples:/examples -v ${CURRENT_DIR}/tensortrade:/tensortrade ${CPU_IMAGE} jupyter notebook --ip='*' --port=8888 --no-browser --allow-root ./examples/
 
 run-docs: build-cpu-if-not-built
 	if [ $$(docker ps -aq --filter name=tensortrade_docs) ]; then docker rm $$(docker ps -aq --filter name=tensortrade_docs); fi;

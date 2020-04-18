@@ -17,7 +17,7 @@ References:
     - https://towardsdatascience.com/deep-reinforcement-learning-build-a-deep-q-network-dqn-to-play-cartpole-with-tensorflow-2-and-gym-8e105744b998
     - https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html#dqn-algorithm
 """
-
+import os
 import random
 import numpy as np
 import tensorflow as tf
@@ -66,11 +66,16 @@ class DQNAgent(Agent):
 
     def save(self, path: str, **kwargs):
         episode: int = kwargs.get('episode', None)
-
         if episode:
             filename = "policy_network__" + self.id + "__" + str(episode).zfill(3) + ".hdf5"
         else:
             filename = "policy_network__" + self.id + ".hdf5"
+
+        if not os.path.isdir(path):
+            try:
+                os.makedirs(path)
+            except OSError:  # Guard against race condition
+                raise
 
         self.policy_network.save(path + filename)
 

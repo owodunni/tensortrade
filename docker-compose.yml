@@ -1,0 +1,14 @@
+version: "3"
+services:
+  tensortrade:
+    hostname: tensortrade
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:6006:6006"
+    volumes:
+        - ./examples:/tensortrade/examples 
+        - ./tensortrade:/tensortrade/tensortrade
+    command: jupyter notebook --ip='*' --port=8888 --no-browser --allow-root ./examples/
+    network_mode: bridge
