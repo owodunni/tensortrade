@@ -21,6 +21,7 @@ import os
 import random
 import numpy as np
 import tensorflow as tf
+import datetime
 from collections import namedtuple
 
 from tensortrade.agents import Agent, ReplayMemory
@@ -33,7 +34,8 @@ class DQNAgent(Agent):
 
     def __init__(self,
                  env: 'TradingEnvironment',
-                 policy_network: tf.keras.Model = None):
+                 policy_network: tf.keras.Model = None,
+                 log_path: str = "logs"):
         self.env = env
         self.n_actions = env.action_space.n
         self.observation_shape = env.observation_space.shape
@@ -44,6 +46,11 @@ class DQNAgent(Agent):
         self.target_network.trainable = False
 
         self.env.agent_id = self.id
+        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        train_log_dir = f"{log_path}/gradient_tape/{current_time}/train"
+        test_log_dir = f"{log_path}/gradient_tape/{current_time}/test"
+        self.train_summary_writer = tf.summary.create_file_writer(train_log_dir)
+        self.test_summary_writer = tf.summary.create_file_writer(test_log_dir)
 
     def _build_policy_network(self):
         network = tf.keras.Sequential([
@@ -115,10 +122,10 @@ class DQNAgent(Agent):
             )
 
             expected_state_action_values = reward_batch + (discount_factor * next_state_values)
-            loss_value = loss(expected_state_action_values, state_action_values)
+            self.loss_value = loss(expected_state_action_values, state_action_values)
 
         variables = self.policy_network.trainable_variables
-        gradients = tape.gradient(loss_value, variables)
+        gradients = tape.gradient(self.loss_value, variables)
         optimizer.apply_gradients(zip(gradients, variables))
 
     def train(self,
@@ -139,8 +146,9 @@ class DQNAgent(Agent):
         render_interval: int = kwargs.get('render_interval', 50)  # in steps, None for episode end render only
         log_path: str = kwargs.get('log_path', None)
 
+        tensorboard_callbacks = None
         if log_path:
-            tf.keras.callbacks.TensorBoard(log_path, histogram_freq=1)
+             tensorboard_callbacks = tf.keras.callbacks.TensorBoard(log_path, histogram_freq=1)
 
         memory = ReplayMemory(memory_capacity, transition_type=DQNTransition)
         episode = 0
@@ -174,6 +182,9 @@ class DQNAgent(Agent):
                     continue
 
                 self._apply_gradient_descent(memory, batch_size, learning_rate, discount_factor)
+
+                with self.test_summary_writer.as_default():
+                    tf.summary.scalar('loss', self.loss_value, step=steps_done)
 
                 if n_steps and steps_done >= n_steps:
                     done = True

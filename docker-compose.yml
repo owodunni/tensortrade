@@ -20,5 +20,5 @@ services:
     volumes:
         - ./examples:/tensortrade/examples
         - ./tensortrade:/tensortrade/tensortrade
-    command: tensorboard --logdir ./examples/logs
+    command: tensorboard --logdir ./examples/logs/
     network_mode: host
