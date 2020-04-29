@@ -300,6 +300,7 @@ class TradingEnvironment(gym.Env, TimeIndexed):
         Arguments:
             episode: Current episode number (0-based).
         """
+
         current_step = self.clock.step - 1
 
         for renderer in self._renderers:

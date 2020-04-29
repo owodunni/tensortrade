@@ -2,11 +2,13 @@ import importlib
 from .base_renderer import BaseRenderer
 from .screen_logger import ScreenLogger
 from .file_logger import FileLogger
+from .tensorboard_logger import TensorBoardLogger
 
 
 _registry = {
     'screenlog': ScreenLogger,
     'filelog': FileLogger,
+    'tensorboardlog': TensorBoardLogger
 }
 
 
